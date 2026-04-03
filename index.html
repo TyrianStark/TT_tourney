@@ -2,498 +2,210 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TT Mixer Ultimate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TT Mixer Elite</title>
     <style>
-        :root {
-            --primary: #1a73e8;
-            --success: #28a745;
-            --danger: #d93025;
-            --warning: #ff9800;
-            --bg: #f0f2f5;
-            --card-bg: #ffffff;
-            --text: #1c1e21;
-            --text-secondary: #65676b;
-            --border: #e0e0e0;
+        :root { 
+            --bg: #0f172a; 
+            --card: #1e293b; 
+            --primary: #3b82f6; 
+            --text: #f1f5f9; 
+            --accent: #ef4444; 
+            --success: #10b981;
+            --border: #334155;
         }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            padding: 10px;
-            background: var(--bg); 
-            color: var(--text); 
-            line-height: 1.4; 
-        }
-
-        .card { 
-            background: var(--card-bg); 
-            padding: 15px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
-            margin-bottom: 15px; 
-        }
-
-        h2 { 
-            margin-top: 0; 
-            font-size: 1.1rem; 
-            color: var(--primary); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-
-        input[type="text"], button { 
-            padding: 12px; 
-            border-radius: 8px; 
-            border: 1px solid #ddd; 
-            font-size: 1rem; 
-            outline: none;
-        }
-
-        button { 
-            cursor: pointer; 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            font-weight: 600; 
-            transition: background 0.2s, transform 0.1s;
-        }
-
-        button:active { transform: scale(0.97); }
-
-        .secondary { 
-            background: #f0f2f5; 
-            color: var(--text); 
-            border: 1px solid #ccc; 
-            width: 100%; 
-            margin-top: 10px; 
-        }
-
-        .clear-btn { 
-            background: var(--warning); 
-            font-size: 0.8rem; 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-        }
-
-        .undo-btn { 
-            background: #6c757d; 
-            font-size: 0.85rem; 
-            width: 100%; 
-            margin-bottom: 15px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        /* Player Row Styling */
-        .player-row { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            margin-bottom: 10px; 
-        }
-
-        .avail-toggle {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-width: 50px;
-        }
-
-        .avail-toggle label {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            margin-bottom: 2px;
-            font-weight: bold;
-        }
-
-        .avail-toggle input {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.95rem; }
-        th, td { border-bottom: 1px solid #eee; padding: 10px 8px; text-align: left; }
-        th { color: var(--text-secondary); font-weight: 500; font-size: 0.8rem; text-transform: uppercase; }
-
-        .match-card { 
-            border: 1px solid var(--border); 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin-bottom: 12px; 
-            background: #fff; 
-            position: relative; 
-        }
-
-        .match-card.completed { opacity: 0.6; background: #fafafa; border-color: #eee; }
-        .match-card.skipped { opacity: 0.4; border-style: dashed; }
-
-        .match-num { 
-            position: absolute; 
-            top: 8px; 
-            left: 8px; 
-            font-size: 0.65rem; 
-            background: #f0f0f0; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            color: #777; 
-            font-weight: bold;
-        }
-
-        .sitter-info { 
-            font-size: 0.75rem; 
-            color: var(--danger); 
-            margin-bottom: 10px; 
-            font-weight: bold; 
-            text-align: center;
-            text-transform: uppercase;
-        }
-
-        .vs-container { 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin: 15px 0;
-            font-size: 1rem;
-        }
-
-        .team { width: 40%; font-weight: 700; }
-        .team-1 { text-align: right; }
-        .team-2 { text-align: left; }
-
-        .vs { 
-            font-weight: 900; 
-            color: #ddd; 
-            font-style: italic;
-            font-size: 0.8rem;
-        }
-
-        .win-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; line-height: 1.5; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .card { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        h2 { margin-top: 0; font-size: 1.1rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
         
-        .skip-btn { 
-            grid-column: span 2; 
-            background: transparent; 
-            color: #999; 
-            border: 1px solid #eee; 
-            font-size: 0.75rem; 
-            padding: 8px; 
-        }
-
-        .status-badge {
-            text-align: center;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            background: #f0f0f0;
-            padding: 4px;
-            border-radius: 4px;
-            margin-top: 8px;
-        }
-
-        #matchList { display: flex; flex-direction: column; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        input[type="text"] { flex-grow: 1; padding: 10px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 0.9rem; }
+        input[type="checkbox"] { transform: scale(1.3); }
         
-        .sticky-undo {
-            position: sticky;
-            top: 10px;
-            z-index: 100;
-        }
+        button { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem; transition: filter 0.2s; }
+        button:active { filter: brightness(0.8); }
+        
+        /* Split Match View */
+        .match-grid { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: start; gap: 10px; margin-bottom: 15px; }
+        .team-col { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .player-name { font-weight: 600; font-size: 1rem; margin: 4px 0; }
+        .ampersand { color: #64748b; font-size: 0.8rem; }
+        .vs-circle { background: var(--accent); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.7rem; margin-top: 25px; }
+        .win-btn { background: var(--success); padding: 10px; font-size: 0.85rem; margin-top: 10px; }
 
-        .footer-actions { margin-top: 30px; padding-bottom: 40px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; color: #94a3b8; font-weight: 500; padding: 8px; }
+        td { padding: 10px 8px; border-top: 1px solid var(--border); }
+        .badge { background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: #94a3b8; }
+        .reset-link { color: #64748b; text-align: center; display: block; margin-top: 20px; font-size: 0.8rem; text-decoration: none; }
     </style>
 </head>
 <body>
 
-<div class="card" id="setupSection">
-    <h2>1. Player Setup</h2>
-    <div id="playerInputs"></div>
-    <button onclick="addPlayerField()" class="secondary">+ Add Player</button>
-    <div class="btn-group">
-        <button onclick="startTournament(false)" style="background: var(--success);">Generate Bracket</button>
-        <button onclick="startTournament(true)" id="addRoundBtn" style="background: var(--primary); display: none;">Add a Round</button>
-    </div>
-</div>
-
-<div id="tournamentArea" style="display:none;">
+<div class="container">
     <div class="card">
-        <h2>Leaderboard <button onclick="clearScoresOnly()" class="clear-btn">Reset All</button></h2>
-        <table>
-            <thead><tr><th>Player</th><th style="text-align:center">Wins</th><th style="text-align:center">Played</th></tr></thead>
-            <tbody id="leaderboardBody"></tbody>
+        <h2>1. Players & Availability</h2>
+        <div id="playerInputs"></div>
+    </div>
+
+    <button onclick="generateNextMatch()">Generate Next Match</button>
+
+    <div id="currentMatchArea" class="card" style="display:none; border: 2px solid var(--primary);">
+        <h2>Current Match</h2>
+        <div class="match-grid">
+            <div class="team-col" id="teamA"></div>
+            <div class="vs-circle">VS</div>
+            <div class="team-col" id="teamB"></div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 40px 1fr; gap: 10px;">
+            <button class="win-btn" onclick="recordWin('A')">Team A Won</button>
+            <div></div>
+            <button class="win-btn" onclick="recordWin('B')">Team B Won</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Leaderboard</h2>
+        <table id="leaderboard">
+            <thead>
+                <tr><th>Player</th><th>P</th><th>W</th><th>Win %</th></tr>
+            </thead>
+            <tbody></tbody>
         </table>
     </div>
     
-    <div id="undoContainer" class="sticky-undo"></div>
-
-    <div class="card">
-        <h2>Match Schedule</h2>
-        <div id="matchList"></div>
-    </div>
-    
-    <div class="footer-actions">
-        <button onclick="resetAll()" style="background: var(--danger); width: 100%;">Delete Everything & Start Over</button>
-    </div>
+    <a href="#" class="reset-link" onclick="resetData()">Reset All Statistics</a>
 </div>
 
 <script>
-    let players = JSON.parse(localStorage.getItem('tt_players')) || ["", "", "", ""];
-    let scores = JSON.parse(localStorage.getItem('tt_scores')) || {};
-    let matchState = JSON.parse(localStorage.getItem('tt_match_state')) || []; 
-    let availablePlayers = JSON.parse(localStorage.getItem('tt_available')) || {}; 
-    let lastAction = null;
+    const MAX_SLOTS = 15;
+    let players = [];
 
-    function init() {
-        renderPlayerFields();
-        if (Object.keys(scores).length > 0 || matchState.length > 0) {
-            document.getElementById('tournamentArea').style.display = 'block';
-            document.getElementById('addRoundBtn').style.display = 'block';
-            renderLeaderboard();
-            renderMatches();
+    // Load Data
+    function load() {
+        const raw = localStorage.getItem('tt_elite_data');
+        if (raw) {
+            players = JSON.parse(raw);
+            // Auto-expand to 15 if user had 10 previously
+            while(players.length < MAX_SLOTS) {
+                players.push({ id: players.length, name: `Player ${players.length+1}`, actualGames: 0, logicGames: 0, wins: 0, isChecked: false, inLastMatch: false });
+            }
+        } else {
+            players = Array.from({length: MAX_SLOTS}, (_, i) => ({
+                id: i, name: `Player ${i+1}`, actualGames: 0, logicGames: 0, wins: 0, isChecked: false, inLastMatch: false
+            }));
         }
     }
 
-    function renderPlayerFields() {
+    let currentMatch = null;
+
+    function renderInputs() {
         const container = document.getElementById('playerInputs');
         container.innerHTML = '';
-        players.forEach((name, i) => {
-            // Default availability to true
-            if (availablePlayers[name] === undefined && name !== "") availablePlayers[name] = true;
-            const isAvail = availablePlayers[name] !== false;
-
-            container.innerHTML += `
-                <div class="player-row">
-                    <input type="text" style="flex-grow:1" placeholder="Player Name" value="${name}" onchange="updatePlayerName(${i}, this.value)">
-                    <div class="avail-toggle">
-                        <label>Play</label>
-                        <input type="checkbox" ${isAvail ? 'checked' : ''} onchange="toggleAvailabilityFromInput(${i}, this.checked)">
-                    </div>
-                </div>`;
+        players.forEach((p, i) => {
+            const div = document.createElement('div');
+            div.className = 'player-row';
+            div.innerHTML = `
+                <input type="checkbox" ${p.isChecked ? 'checked' : ''} onchange="togglePlayer(${i})">
+                <input type="text" value="${p.name}" oninput="updateName(${i}, this.value)" placeholder="Name">
+                <span class="badge">L:${p.logicGames}</span>
+            `;
+            container.appendChild(div);
         });
     }
 
-    function addPlayerField() { players.push(""); renderPlayerFields(); }
-
-    function updatePlayerName(index, val) {
-        const oldName = players[index];
-        const newName = val.trim();
-        
-        // Handle name change in availability map
-        if (oldName && oldName !== newName) {
-            availablePlayers[newName] = availablePlayers[oldName];
-            delete availablePlayers[oldName];
-        } else if (newName && availablePlayers[newName] === undefined) {
-            availablePlayers[newName] = true;
+    function togglePlayer(idx) {
+        players[idx].isChecked = !players[idx].isChecked;
+        if (players[idx].isChecked && players[idx].actualGames === 0) {
+            const played = players.filter(p => p.actualGames > 0);
+            if (played.length > 0) players[idx].logicGames = Math.min(...played.map(p => p.logicGames));
         }
-
-        players[index] = newName;
-        localStorage.setItem('tt_players', JSON.stringify(players));
-        localStorage.setItem('tt_available', JSON.stringify(availablePlayers));
-        
-        if (matchState.length > 0) renderMatches();
+        save();
+        updateLeaderboard();
     }
 
-    function toggleAvailabilityFromInput(index, isChecked) {
-        const name = players[index];
-        if (!name) return;
-        availablePlayers[name] = isChecked;
-        localStorage.setItem('tt_available', JSON.stringify(availablePlayers));
-        if (matchState.length > 0) renderMatches();
-    }
+    function updateName(idx, val) { players[idx].name = val; save(); }
 
-    function startTournament(isAddRound) {
-        const validNames = players.filter(n => n !== "");
-        if (validNames.length < 4) return alert("You need at least 4 players!");
-        
-        validNames.forEach(name => { 
-            if (!scores[name]) scores[name] = { wins: 0, played: 0 };
-            if (availablePlayers[name] === undefined) availablePlayers[name] = true;
+    function generateNextMatch() {
+        const available = players.filter(p => p.isChecked);
+        if (available.length < 4) return alert("Need at least 4 checked players!");
+
+        // 1. Sort with Randomness for Tiers
+        // We add a tiny random decimal to logicGames to break ties randomly
+        available.sort((a, b) => {
+            const scoreA = a.logicGames + (a.inLastMatch ? 0.5 : 0) + Math.random() * 0.1;
+            const scoreB = b.logicGames + (b.inLastMatch ? 0.5 : 0) + Math.random() * 0.1;
+            return scoreA - scoreB;
         });
+
+        const selected = available.slice(0, 4);
+
+        // 2. Seeding by Win % (using 50% for new players)
+        const getRate = (p) => p.actualGames === 0 ? 50 : (p.wins / p.actualGames) * 100;
+        selected.sort((a, b) => getRate(b) - getRate(a));
+
+        currentMatch = {
+            teamA: [selected[0], selected[3]],
+            teamB: [selected[1], selected[2]]
+        };
+
+        // Render UI Split View
+        document.getElementById('teamA').innerHTML = `<div class="player-name">${currentMatch.teamA[0].name}</div><div class="ampersand">&</div><div class="player-name">${currentMatch.teamA[1].name}</div>`;
+        document.getElementById('teamB').innerHTML = `<div class="player-name">${currentMatch.teamB[0].name}</div><div class="ampersand">&</div><div class="player-name">${currentMatch.teamB[1].name}</div>`;
         
-        localStorage.setItem('tt_scores', JSON.stringify(scores));
-        localStorage.setItem('tt_available', JSON.stringify(availablePlayers));
-        
-        document.getElementById('tournamentArea').style.display = 'block';
-        document.getElementById('addRoundBtn').style.display = 'block';
-        
-        generateBracket(isAddRound);
-        renderLeaderboard();
-        renderMatches();
-        
-        if (isAddRound) {
-            setTimeout(() => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }, 100);
-        }
+        document.getElementById('currentMatchArea').style.display = 'block';
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
-    function getCombinations(arr, k) {
-        let results = [];
-        function helper(start, combo) {
-            if (combo.length === k) { results.push([...combo]); return; }
-            for (let i = start; i < arr.length; i++) {
-                combo.push(arr[i]); helper(i + 1, combo); combo.pop();
+    function recordWin(winner) {
+        const involvedIds = [...currentMatch.teamA, ...currentMatch.teamB].map(p => p.id);
+        const winningIds = (winner === 'A' ? currentMatch.teamA : currentMatch.teamB).map(p => p.id);
+
+        players.forEach(p => {
+            if (involvedIds.includes(p.id)) {
+                p.actualGames++;
+                p.logicGames++;
+                p.inLastMatch = true;
+                if (winningIds.includes(p.id)) p.wins++;
+            } else {
+                p.inLastMatch = false;
             }
-        }
-        helper(0, []);
-        return results;
-    }
-
-    function generateBracket(isAddRound) {
-        if (!isAddRound && matchState.length > 0) return;
-
-        const validNames = players.filter(n => n !== "");
-        const playerQuartets = getCombinations(validNames, 4);
-        let pool = [];
-        let seenKeys = new Set();
-
-        playerQuartets.forEach(q => {
-            const matchups = [{ t1: [q[0], q[1]], t2: [q[2], q[3]] }, { t1: [q[0], q[2]], t2: [q[1], q[3]] }, { t1: [q[0], q[3]], t2: [q[1], q[2]] }];
-            matchups.forEach(m => {
-                const k = [m.t1.slice().sort().join('|'), m.t2.slice().sort().join('|')].sort().join('VS');
-                if (!seenKeys.has(k)) {
-                    const sitters = validNames.filter(name => !q.includes(name));
-                    pool.push({ ...m, sitters });
-                    seenKeys.add(k);
-                }
-            });
         });
 
-        let sorted = [];
-        let sittingCounts = {};
-        validNames.forEach(n => sittingCounts[n] = 0);
-
-        if (pool.length > 0) {
-            let lastMatchSitters = matchState.length > 0 ? matchState[matchState.length - 1].sitters : [];
-            while (pool.length > 0) {
-                let bestIdx = 0, minScore = Infinity;
-                for (let i = 0; i < pool.length; i++) {
-                    let prevSitters = sorted.length > 0 ? sorted[sorted.length - 1].sitters : lastMatchSitters;
-                    let currentSitters = pool[i].sitters;
-                    let overlap = currentSitters.filter(s => prevSitters.includes(s)).length;
-                    let historyWeight = currentSitters.reduce((acc, s) => acc + (sittingCounts[s] || 0), 0);
-                    let score = (overlap * 50) + historyWeight; 
-                    if (score < minScore) { minScore = score; bestIdx = i; }
-                }
-                let picked = pool.splice(bestIdx, 1)[0];
-                picked.sitters.forEach(s => sittingCounts[s]++);
-                sorted.push(picked);
-            }
-        }
-
-        const startIdx = matchState.length;
-        const newMatches = sorted.map((m, idx) => ({ ...m, id: startIdx + idx, status: 'pending' }));
-        matchState = [...matchState, ...newMatches];
-        localStorage.setItem('tt_match_state', JSON.stringify(matchState));
+        document.getElementById('currentMatchArea').style.display = 'none';
+        save();
+        renderInputs();
+        updateLeaderboard();
     }
 
-    function renderMatches() {
-        const container = document.getElementById('matchList');
-        container.innerHTML = '';
+    function updateLeaderboard() {
+        const tbody = document.querySelector('#leaderboard tbody');
+        tbody.innerHTML = '';
+        const sorted = [...players].filter(p => p.actualGames > 0 || p.isChecked).sort((a, b) => {
+            const rateA = a.actualGames ? a.wins / a.actualGames : -1;
+            const rateB = b.actualGames ? b.wins / b.actualGames : -1;
+            return rateB - rateA || b.actualGames - a.actualGames;
+        });
         
-        const pending = matchState.filter(m => m.status === 'pending');
-        const done = matchState.filter(m => m.status !== 'pending');
-
-        [...pending, ...done].forEach((m) => {
-            const isDone = m.status !== 'pending';
-            if (!isDone) {
-                const allPlayersInMatch = [...m.t1, ...m.t2];
-                if (allPlayersInMatch.some(p => availablePlayers[p] === false)) return;
-            }
-
-            const isSkipped = m.status === 'skipped';
-            container.innerHTML += `
-                <div class="match-card ${isDone ? 'completed' : ''} ${isSkipped ? 'skipped' : ''}" id="match-${m.id}">
-                    <div class="match-num">#${m.id + 1}</div>
-                    <div class="sitter-info">${m.sitters.length > 0 ? 'Sitting: ' + m.sitters.join(', ') : 'Everyone Playing'}</div>
-                    <div class="vs-container">
-                        <div class="team team-1">${m.t1[0]} & ${m.t1[1]}</div>
-                        <span class="vs">vs</span>
-                        <div class="team team-2">${m.t2[0]} & ${m.t2[1]}</div>
-                    </div>
-                    ${!isDone ? `
-                        <div class="win-grid">
-                            <button onclick="recordResult(${m.id}, 't1')">T1 Win</button>
-                            <button onclick="recordResult(${m.id}, 't2')">T2 Win</button>
-                            <button class="skip-btn" onclick="recordResult(${m.id}, 'skipped')">Skip this Match</button>
-                        </div>
-                    ` : `
-                        <div class="status-badge">
-                            ${m.status === 'skipped' ? 'MATCH SKIPPED' : (m.status === 'won-t1' ? 'TEAM 1 WON' : 'TEAM 2 WON')}
-                        </div>
-                    `}
-                </div>`;
+        sorted.forEach(p => {
+            const rate = p.actualGames ? Math.round((p.wins / p.actualGames) * 100) : 0;
+            tbody.innerHTML += `<tr><td>${p.name}</td><td>${p.actualGames}</td><td>${p.wins}</td><td>${rate}%</td></tr>`;
         });
-        renderUndoBtn();
     }
 
-    function recordResult(matchId, result) {
-        const match = matchState[matchId];
-        lastAction = { matchId: matchId, prevStatus: match.status, scoresSnapshot: JSON.parse(JSON.stringify(scores)) };
-
-        if (result !== 'skipped') {
-            const p = [...match.t1, ...match.t2];
-            p.forEach(name => {
-                if(!scores[name]) scores[name] = {wins:0, played:0};
-                scores[name].played++;
-            });
-            if (result === 't1') { scores[match.t1[0]].wins++; scores[match.t1[1]].wins++; } 
-            else { scores[match.t2[0]].wins++; scores[match.t2[1]].wins++; }
-        }
-
-        match.status = result === 'skipped' ? 'skipped' : (result === 't1' ? 'won-t1' : 'won-t2');
-        saveAndRefresh();
-    }
-
-    function undoLast() {
-        if (!lastAction) return;
-        const match = matchState[lastAction.matchId];
-        match.status = lastAction.prevStatus;
-        scores = lastAction.scoresSnapshot;
-        lastAction = null;
-        saveAndRefresh();
-    }
-
-    function renderUndoBtn() {
-        const container = document.getElementById('undoContainer');
-        if (lastAction) {
-            container.innerHTML = `<button class="undo-btn" onclick="undoLast()"><span>↺ Undo Result for Match #${lastAction.matchId + 1}</span></button>`;
-        } else { container.innerHTML = ''; }
-    }
-
-    function saveAndRefresh() {
-        localStorage.setItem('tt_scores', JSON.stringify(scores));
-        localStorage.setItem('tt_match_state', JSON.stringify(matchState));
-        renderLeaderboard();
-        renderMatches();
-    }
-
-    function renderLeaderboard() {
-        const body = document.getElementById('leaderboardBody');
-        body.innerHTML = '';
-        Object.entries(scores)
-            .sort(([,a], [,b]) => b.wins - a.wins || a.played - b.played)
-            .forEach(([name, data]) => {
-                body.innerHTML += `<tr><td><strong>${name}</strong></td><td style="text-align:center">${data.wins}</td><td style="text-align:center">${data.played}</td></tr>`;
-            });
-    }
-
-    function clearScoresOnly() {
-        if (confirm("Reset current scores and match progress? Player names will be kept.")) {
-            scores = {}; matchState = [];
-            localStorage.removeItem('tt_scores'); localStorage.removeItem('tt_match_state');
+    function save() { localStorage.setItem('tt_elite_data', JSON.stringify(players)); }
+    
+    function resetData() {
+        if(confirm("Wipe all statistics and start fresh?")) {
+            localStorage.removeItem('tt_elite_data');
             location.reload();
         }
     }
 
-    function resetAll() { if (confirm("Delete EVERYTHING?")) { localStorage.clear(); location.reload(); } }
-
-    init();
+    load();
+    renderInputs();
+    updateLeaderboard();
 </script>
 </body>
 </html>
