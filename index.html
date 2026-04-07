@@ -75,7 +75,12 @@
         </table>
     </div>
     
-    <a href="#" class="reset-link" onclick="resetData()">Reset All Statistics</a>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <button onclick="resetSession()" style="background: #475569; font-size: 0.8rem; padding: 10px;">Reset Session (L:0)</button>
+        <button onclick="resetLeaderboard()" style="background: #475569; font-size: 0.8rem; padding: 10px;">Clear Leaderboard</button>
+    </div>
+
+    <a href="javascript:void(0)" class="reset-link" onclick="resetData()">Reset All Statistics</a>
 </div>
 
 <script>
@@ -108,7 +113,7 @@
             div.className = 'player-row';
             div.innerHTML = `
                 <input type="checkbox" ${p.isChecked ? 'checked' : ''} onchange="togglePlayer(${i})">
-                <input type="text" value="${p.name}" oninput="updateName(${i}, this.value)" placeholder="Name">
+                <input type="text" value="${p.name}" onchange="updateName(${i}, this.value)" placeholder="Name">
                 <span class="badge">L:${p.logicGames}</span>
             `;
             container.appendChild(div);
@@ -116,27 +121,60 @@
     }
 
     function togglePlayer(idx) {
-        players[idx].isChecked = !players[idx].isChecked;
-        if (players[idx].isChecked && players[idx].actualGames === 0) {
-            const played = players.filter(p => p.actualGames > 0);
-            if (played.length > 0) players[idx].logicGames = Math.min(...played.map(p => p.logicGames));
+        const p = players[idx];
+        p.isChecked = !p.isChecked;
+
+        if (p.isChecked) {
+            if (p.logicGames === 0) {
+                // 1. Find other players who are checked and have played
+                const othersActive = players.filter(pl => 
+                    pl.id !== p.id && pl.isChecked && pl.actualGames > 0
+                );
+
+                if (othersActive.length > 0) {
+                    // Jump to the level of currently active players
+                    p.logicGames = Math.min(...othersActive.map(pl => pl.logicGames));
+                } else {
+                    // 2. Fallback: If no one else is active, check any historical player
+                    const anyPlayed = players.filter(pl => pl.id !== p.id && pl.actualGames > 0);
+                    if (anyPlayed.length > 0) {
+                        p.logicGames = Math.min(...anyPlayed.map(pl => pl.logicGames));
+                    }
+                }
+            }
+        } else {
+            p.logicGames = 0;
         }
+
         save();
+        renderInputs();
         updateLeaderboard();
     }
 
-    function updateName(idx, val) { players[idx].name = val; save(); }
+    // function updateName(idx, val) { players[idx].name = val; save(); }
+    function updateName(idx, val) { 
+        // Prevent empty names or just whitespace
+        const trimmedVal = val.trim();
+        players[idx].name = trimmedVal || `Player ${idx + 1}`; 
+        save(); 
+    }
 
     function generateNextMatch() {
         const available = players.filter(p => p.isChecked);
         if (available.length < 4) return alert("Need at least 4 checked players!");
 
-        // 1. Sort with Randomness for Tiers
-        // We add a tiny random decimal to logicGames to break ties randomly
         available.sort((a, b) => {
-            const scoreA = a.logicGames + (a.inLastMatch ? 0.5 : 0) + Math.random() * 0.1;
-            const scoreB = b.logicGames + (b.inLastMatch ? 0.5 : 0) + Math.random() * 0.1;
-            return scoreA - scoreB;
+            // 1. Calculate base priority (Games played + "Sit out" penalty)
+            const baseA = a.logicGames + (a.inLastMatch ? 0.5 : 0);
+            const baseB = b.logicGames + (b.inLastMatch ? 0.5 : 0);
+
+            // 2. If they aren't equal, sort by the score
+            if (baseA !== baseB) {
+                return baseA - baseB;
+            }
+
+            // 3. If they ARE equal (a tie), return a random 50/50 result
+            return Math.random() - 0.5; 
         });
 
         const selected = available.slice(0, 4);
@@ -181,17 +219,19 @@
 
     function updateLeaderboard() {
         const tbody = document.querySelector('#leaderboard tbody');
-        tbody.innerHTML = '';
         const sorted = [...players].filter(p => p.actualGames > 0 || p.isChecked).sort((a, b) => {
             const rateA = a.actualGames ? a.wins / a.actualGames : -1;
             const rateB = b.actualGames ? b.wins / b.actualGames : -1;
             return rateB - rateA || b.actualGames - a.actualGames;
         });
         
-        sorted.forEach(p => {
+        // Create the full HTML string first
+        const html = sorted.map(p => {
             const rate = p.actualGames ? Math.round((p.wins / p.actualGames) * 100) : 0;
-            tbody.innerHTML += `<tr><td>${p.name}</td><td>${p.actualGames}</td><td>${p.wins}</td><td>${rate}%</td></tr>`;
-        });
+            return `<tr><td>${p.name}</td><td>${p.actualGames}</td><td>${p.wins}</td><td>${rate}%</td></tr>`;
+        }).join('');
+        
+        tbody.innerHTML = html; // Set it once
     }
 
     function save() { localStorage.setItem('tt_elite_data', JSON.stringify(players)); }
@@ -203,6 +243,34 @@
         }
     }
 
+    // Resets only the logicGames (L: badges) - Useful for a new night of play
+    function resetSession() {
+        if (confirm("Reset 'Logic Games' for all players? This keeps Leaderboard stats but restarts tonight's rotation priority.")) {
+            players.forEach(p => {
+                p.logicGames = 0;
+                p.inLastMatch = false;
+            });
+            save();
+            renderInputs();
+            alert("Session reset! Everyone is now at L:0.");
+        }
+    }
+
+    // Resets Wins/Games but keeps Names - Useful for starting a new 'Season'
+    function resetLeaderboard() {
+        if (confirm("Wipe all Win/Loss statistics? Player names will be kept, but the Leaderboard will be cleared.")) {
+            players.forEach(p => {
+                p.actualGames = 0;
+                p.wins = 0;
+                p.logicGames = 0;
+                p.inLastMatch = false;
+            });
+            save();
+            renderInputs();
+            updateLeaderboard();
+            alert("Leaderboard wiped! Ready for a new season.");
+        }
+    }
     load();
     renderInputs();
     updateLeaderboard();
