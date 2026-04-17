@@ -38,7 +38,7 @@
         th { text-align: left; color: #94a3b8; font-weight: 500; padding: 8px; }
         td { padding: 10px 8px; border-top: 1px solid var(--border); }
         .badge { background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: #94a3b8; }
-        .reset-link { color: #64748b; text-align: center; display: block; margin-top: 20px; font-size: 0.8rem; text-decoration: none; }
+        .reset-link { color: #64748b; text-align: center; display: block; margin-top: 20px; font-size: 0.8rem; text-decoration: none; cursor: pointer;}
     </style>
 </head>
 <body>
@@ -69,18 +69,24 @@
         <h2>Leaderboard</h2>
         <table id="leaderboard">
             <thead>
-                <tr><th>Player</th><th>P</th><th>W</th><th>Win %</th></tr>
+                <tr><th>Player</th><th>P</th><th>W</th><th>W%</th><th>Wilson</th></tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
     
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
         <button onclick="resetSession()" style="background: #475569; font-size: 0.8rem; padding: 10px;">Reset Session (L:0)</button>
         <button onclick="resetLeaderboard()" style="background: #475569; font-size: 0.8rem; padding: 10px;">Clear Leaderboard</button>
     </div>
 
-    <a href="javascript:void(0)" class="reset-link" onclick="resetData()">Reset All Statistics</a>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <button onclick="exportData()" style="background: #1e293b; border: 1px solid var(--border); font-size: 0.8rem; padding: 10px;">📤 Export Data</button>
+        <button onclick="document.getElementById('importFile').click()" style="background: #1e293b; border: 1px solid var(--border); font-size: 0.8rem; padding: 10px;">📥 Import Data</button>
+        <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+    </div>
+
+    <a href="javascript:void(0)" class="reset-link" onclick="resetData()">Reset All Statistics (Wipe Everything)</a>
 </div>
 
 <script>
@@ -123,40 +129,35 @@
     function togglePlayer(idx) {
         const p = players[idx];
         p.isChecked = !p.isChecked;
-
-        if (p.isChecked) {
-            if (p.logicGames === 0) {
-                // 1. Find other players who are checked and have played
-                const othersActive = players.filter(pl => 
-                    pl.id !== p.id && pl.isChecked && pl.actualGames > 0
-                );
-
-                if (othersActive.length > 0) {
-                    // Jump to the level of currently active players
-                    p.logicGames = Math.min(...othersActive.map(pl => pl.logicGames));
-                } else {
-                    // 2. Fallback: If no one else is active, check any historical player
-                    const anyPlayed = players.filter(pl => pl.id !== p.id && pl.actualGames > 0);
-                    if (anyPlayed.length > 0) {
-                        p.logicGames = Math.min(...anyPlayed.map(pl => pl.logicGames));
-                    }
-                }
+        if (p.isChecked && p.logicGames === 0) {
+            const othersActive = players.filter(pl => pl.id !== p.id && pl.isChecked && pl.actualGames > 0);
+            if (othersActive.length > 0) {
+                p.logicGames = Math.min(...othersActive.map(pl => pl.logicGames));
+            } else {
+                const anyPlayed = players.filter(pl => pl.id !== p.id && pl.actualGames > 0);
+                if (anyPlayed.length > 0) p.logicGames = Math.min(...anyPlayed.map(pl => pl.logicGames));
             }
-        } else {
+        } else if (!p.isChecked) {
             p.logicGames = 0;
         }
-
         save();
         renderInputs();
         updateLeaderboard();
     }
 
-    // function updateName(idx, val) { players[idx].name = val; save(); }
-    function updateName(idx, val) { 
-        // Prevent empty names or just whitespace
-        const trimmedVal = val.trim();
-        players[idx].name = trimmedVal || `Player ${idx + 1}`; 
+    function updateName(idx, val) {
+        players[idx].name = val.trim() || `Player ${idx + 1}`; 
         save(); 
+    }
+
+    // Wilson Score Lower Bound Calculation
+    function getWilsonScore(wins, total) {
+        if (total === 0) return 0;
+        const z = 1.96; // 95% confidence
+        const phat = wins / total;
+        const score = (phat + (z * z) / (2 * total) - z * Math.sqrt((phat * (1 - phat) + (z * z) / (4 * total)) / total)) / (1 + (z * z) / total);
+        
+        return score * 100; // Multiply by 100 at the very end
     }
 
     function generateNextMatch() {
@@ -164,34 +165,19 @@
         if (available.length < 4) return alert("Need at least 4 checked players!");
 
         available.sort((a, b) => {
-            // 1. Calculate base priority (Games played + "Sit out" penalty)
             const baseA = a.logicGames + (a.inLastMatch ? 0.5 : 0);
             const baseB = b.logicGames + (b.inLastMatch ? 0.5 : 0);
-
-            // 2. If they aren't equal, sort by the score
-            if (baseA !== baseB) {
-                return baseA - baseB;
-            }
-
-            // 3. If they ARE equal (a tie), return a random 50/50 result
-            return Math.random() - 0.5; 
+            return baseA !== baseB ? baseA - baseB : Math.random() - 0.5;
         });
 
         const selected = available.slice(0, 4);
-
-        // 2. Seeding by Win % (using 50% for new players)
         const getRate = (p) => p.actualGames === 0 ? 50 : (p.wins / p.actualGames) * 100;
         selected.sort((a, b) => getRate(b) - getRate(a));
 
-        currentMatch = {
-            teamA: [selected[0], selected[3]],
-            teamB: [selected[1], selected[2]]
-        };
+        currentMatch = { teamA: [selected[0], selected[3]], teamB: [selected[1], selected[2]] };
 
-        // Render UI Split View
         document.getElementById('teamA').innerHTML = `<div class="player-name">${currentMatch.teamA[0].name}</div><div class="ampersand">&</div><div class="player-name">${currentMatch.teamA[1].name}</div>`;
         document.getElementById('teamB').innerHTML = `<div class="player-name">${currentMatch.teamB[0].name}</div><div class="ampersand">&</div><div class="player-name">${currentMatch.teamB[1].name}</div>`;
-        
         document.getElementById('currentMatchArea').style.display = 'block';
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
@@ -199,43 +185,59 @@
     function recordWin(winner) {
         const involvedIds = [...currentMatch.teamA, ...currentMatch.teamB].map(p => p.id);
         const winningIds = (winner === 'A' ? currentMatch.teamA : currentMatch.teamB).map(p => p.id);
-
         players.forEach(p => {
             if (involvedIds.includes(p.id)) {
-                p.actualGames++;
-                p.logicGames++;
-                p.inLastMatch = true;
+                p.actualGames++; p.logicGames++; p.inLastMatch = true;
                 if (winningIds.includes(p.id)) p.wins++;
-            } else {
-                p.inLastMatch = false;
-            }
+            } else { p.inLastMatch = false; }
         });
-
         document.getElementById('currentMatchArea').style.display = 'none';
-        save();
-        renderInputs();
-        updateLeaderboard();
+        save(); renderInputs(); updateLeaderboard();
     }
 
     function updateLeaderboard() {
         const tbody = document.querySelector('#leaderboard tbody');
         const sorted = [...players].filter(p => p.actualGames > 0 || p.isChecked).sort((a, b) => {
-            const rateA = a.actualGames ? a.wins / a.actualGames : -1;
-            const rateB = b.actualGames ? b.wins / b.actualGames : -1;
-            return rateB - rateA || b.actualGames - a.actualGames;
+            const scoreA = getWilsonScore(a.wins, a.actualGames);
+            const scoreB = getWilsonScore(b.wins, b.actualGames);
+            return scoreB - scoreA || b.actualGames - a.actualGames;
         });
         
-        // Create the full HTML string first
-        const html = sorted.map(p => {
+        tbody.innerHTML = sorted.map(p => {
             const rate = p.actualGames ? Math.round((p.wins / p.actualGames) * 100) : 0;
-            return `<tr><td>${p.name}</td><td>${p.actualGames}</td><td>${p.wins}</td><td>${rate}%</td></tr>`;
+            const wilson = getWilsonScore(p.wins, p.actualGames).toFixed(1);
+            return `<tr><td>${p.name}</td><td>${p.actualGames}</td><td>${p.wins}</td><td>${rate}%</td><td>${wilson}</td></tr>`;
         }).join('');
-        
-        tbody.innerHTML = html; // Set it once
     }
 
     function save() { localStorage.setItem('tt_elite_data', JSON.stringify(players)); }
-    
+
+    function exportData() {
+        const dataStr = JSON.stringify(players, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `tt_mixer_backup_${new Date().toISOString().slice(0,10)}.json`;
+        link.click();
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (Array.isArray(imported)) {
+                    players = imported;
+                    save();
+                    location.reload();
+                }
+            } catch (err) { alert("Invalid file format."); }
+        };
+        reader.readAsText(file);
+    }
     function resetData() {
         if(confirm("Wipe all statistics and start fresh?")) {
             localStorage.removeItem('tt_elite_data');
