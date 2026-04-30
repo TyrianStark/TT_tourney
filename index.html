@@ -110,7 +110,7 @@
             players = JSON.parse(raw);
         } else {
             players = Array.from({length: MAX_SLOTS}, (_, i) => ({
-                id: i, name: `Player ${i+1}`, isChecked: false, inLastMatch: false, logicGames: 0,
+                id: i, name: `Player ${i+1}`, isChecked: false, logicGames: 0,
                 v2: { actualGames: 0, wins: 0 },
                 v1: { actualGames: 0, wins: 0 }
             }));
@@ -121,7 +121,7 @@
         if (mode === currentMode) return;
         if (confirm(`Switch to ${mode === 'v1' ? '1 vs 1' : '2 vs 2'}? This resets 'L' priority badges.`)) {
             currentMode = mode;
-            players.forEach(p => { p.logicGames = 0; p.inLastMatch = false; });
+            players.forEach(p => { p.logicGames = 0; });
             document.getElementById('btnV1').classList.toggle('active', mode === 'v1');
             document.getElementById('btnV2').classList.toggle('active', mode === 'v2');
             document.getElementById('leaderboardTitle').innerText = mode === 'v1' ? '1v1 Leaderboard' : '2v2 Leaderboard';
@@ -139,22 +139,21 @@
             div.innerHTML = `
                 <input type="checkbox" ${p.isChecked ? 'checked' : ''} onchange="togglePlayer(${i})">
                 <input type="text" value="${p.name}" onchange="updateName(${i}, this.value)">
-                <span class="badge">L:${p.logicGames}</span>
+                <span class="badge">L:${p.logicGames || 0}</span>
             `;
             container.appendChild(div);
         });
     }
 
     function togglePlayer(idx) {
-        const p = players[idx];
-        p.isChecked = !p.isChecked;
-        if (!p.isChecked) p.logicGames = 0;
+        players[idx].isChecked = !players[idx].isChecked;
+        if (!players[idx].isChecked) players[idx].logicGames = 0;
         save(); renderInputs(); updateLeaderboard();
     }
 
     function updateName(idx, val) {
         players[idx].name = val.trim() || `Player ${idx + 1}`; 
-        save(); 
+        save(); updateLeaderboard();
     }
 
     function getWilsonScore(wins, total) {
@@ -169,20 +168,11 @@
         const required = currentMode === 'v1' ? 2 : 4;
         if (available.length < required) return alert(`Need at least ${required} checked players!`);
 
-        // 1. Sort by logicGames primarily to keep it fair.
-        // 2. Use Math.random() as the ONLY tie-breaker. 
-        // This removes the "0.7 penalty" wall and allows 
-        // the groups to mix naturally every time.
-        available.sort((a, b) => {
-            if (a.logicGames !== b.logicGames) {
-                return a.logicGames - b.logicGames;
-            }
-            return Math.random() - 0.5;
-        });
+        // Sort: Least games first, random tie-breaker
+        let pool = [...available].sort(() => Math.random() - 0.5);
+        pool.sort((a, b) => (a.logicGames || 0) - (b.logicGames || 0));
 
-        const selected = available.slice(0, required);
-        
-        // Seed by skill for the initial pairing
+        const selected = pool.slice(0, required);
         const getRate = (p) => p[currentMode].actualGames === 0 ? 50 : (p[currentMode].wins / p[currentMode].actualGames) * 100;
         selected.sort((a, b) => getRate(b) - getRate(a));
 
@@ -194,11 +184,9 @@
         
         displayMatch();
         document.getElementById('currentMatchArea').style.display = 'block';
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
     function displayMatch() {
-        // Toggle the shuffle button visibility based on mode
         const shuffleBtn = document.getElementById('shuffleBtn');
         shuffleBtn.style.display = (currentMode === 'v2') ? 'block' : 'none';
 
@@ -212,15 +200,10 @@
     }
 
     function shufflePairs() {
-        if (!currentMatch) return;
+        if (!currentMatch || currentMode !== 'v2') return;
         const all = [...currentMatch.teamA, ...currentMatch.teamB].sort(() => Math.random() - 0.5);
-        if (currentMode === 'v2') {
-            currentMatch.teamA = [all[0], all[1]];
-            currentMatch.teamB = [all[2], all[3]];
-        } else {
-            currentMatch.teamA = [all[0]];
-            currentMatch.teamB = [all[1]];
-        }
+        currentMatch.teamA = [all[0], all[1]];
+        currentMatch.teamB = [all[2], all[3]];
         displayMatch();
     }
 
@@ -231,11 +214,8 @@
         players.forEach(p => {
             if (involvedIds.includes(p.id)) {
                 p[currentMode].actualGames++; 
-                p.logicGames++; 
-                p.inLastMatch = true;
+                p.logicGames = (p.logicGames || 0) + 1;
                 if (winningIds.includes(p.id)) p[currentMode].wins++;
-            } else { 
-                p.inLastMatch = false; 
             }
         });
         
@@ -246,6 +226,9 @@
 
     function updateLeaderboard() {
         const tbody = document.querySelector('#leaderboard tbody');
+        if (!tbody) return;
+
+        // Show players who have either played games OR are currently checked in
         const sorted = [...players].filter(p => p[currentMode].actualGames > 0 || p.isChecked).sort((a, b) => {
             const scoreA = getWilsonScore(a[currentMode].wins, a[currentMode].actualGames);
             const scoreB = getWilsonScore(b[currentMode].wins, b[currentMode].actualGames);
@@ -267,7 +250,7 @@
         const blob = new Blob([dataStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = `tt_mixer_dual_${new Date().toISOString().slice(0,10)}.json`;
+        a.href = url; a.download = `tt_mixer_dual_export.json`;
         a.click();
     }
 
@@ -280,7 +263,10 @@
                 const imported = JSON.parse(e.target.result);
                 if (Array.isArray(imported)) {
                     players = imported;
-                    save(); location.reload();
+                    save(); // Save to local storage
+                    renderInputs(); // Refresh UI list
+                    updateLeaderboard(); // Refresh UI table
+                    alert("Data imported and saved successfully!");
                 }
             } catch (err) { alert("Invalid file format."); }
         };
@@ -293,14 +279,14 @@
 
     function resetSession() {
         if (confirm("Reset 'L' rotation?")) {
-            players.forEach(p => { p.logicGames = 0; p.inLastMatch = false; });
+            players.forEach(p => { p.logicGames = 0; });
             save(); renderInputs();
         }
     }
 
     function resetLeaderboard() {
         if (confirm(`Wipe all ${currentMode} stats?`)) {
-            players.forEach(p => { p[currentMode].actualGames = 0; p[currentMode].wins = 0; p.logicGames = 0; p.inLastMatch = false; });
+            players.forEach(p => { p[currentMode].actualGames = 0; p[currentMode].wins = 0; p.logicGames = 0; });
             save(); renderInputs(); updateLeaderboard();
         }
     }
