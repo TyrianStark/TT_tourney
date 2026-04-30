@@ -146,9 +146,29 @@
     }
 
     function togglePlayer(idx) {
-        players[idx].isChecked = !players[idx].isChecked;
-        if (!players[idx].isChecked) players[idx].logicGames = 0;
-        save(); renderInputs(); updateLeaderboard();
+        // 1. Reference the specific player in the master array
+        const p = players[idx];
+        p.isChecked = !p.isChecked;
+
+        if (p.isChecked) {
+            // 2. Filter everyone ELSE who is already checked in
+            const others = players.filter((pl, i) => pl.isChecked && i !== idx);
+            
+            if (others.length > 0) {
+                // 3. Find the lowest L from the others
+                const minL = Math.min(...others.map(pl => pl.logicGames || 0));
+                p.logicGames = minL;
+            } else {
+                p.logicGames = 0;
+            }
+        } else {
+            p.logicGames = 0;
+        }
+
+        // 4. CRITICAL: Save and Re-render
+        save(); 
+        renderInputs(); 
+        updateLeaderboard();
     }
 
     function updateName(idx, val) {
