@@ -4,41 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TT Mixer Elite Dual</title>
-    <style>
-        :root { 
-            --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f1f5f9; 
-            --accent: #ef4444; --success: #10b981; --border: #334155;
-        }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; line-height: 1.5; }
-        .container { max-width: 500px; margin: 0 auto; }
-        .card { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 20px; }
-        h2 { margin-top: 0; font-size: 1.1rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
-        
-        /* Mode Switcher */
-        .mode-switch { display: flex; background: #0f172a; border-radius: 10px; padding: 4px; margin-bottom: 20px; border: 1px solid var(--border); }
-        .mode-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #64748b; cursor: pointer; border-radius: 8px; font-weight: bold; transition: all 0.2s; }
-        .mode-btn.active { background: var(--primary); color: white; }
-
-        .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        input[type="text"] { flex-grow: 1; padding: 10px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 0.9rem; }
-        input[type="checkbox"] { transform: scale(1.3); }
-        
-        button { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1rem; transition: filter 0.2s; }
-        button:active { filter: brightness(0.8); }
-        
-        .match-grid { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: start; gap: 10px; margin-bottom: 15px; }
-        .team-col { display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .player-name { font-weight: 600; font-size: 1rem; margin: 4px 0; }
-        .ampersand { color: #64748b; font-size: 0.8rem; }
-        .vs-circle { background: var(--accent); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.7rem; margin-top: 25px; }
-        .win-btn { background: var(--success); padding: 10px; font-size: 0.85rem; margin-top: 10px; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { text-align: left; color: #94a3b8; font-weight: 500; padding: 8px; }
-        td { padding: 10px 8px; border-top: 1px solid var(--border); }
-        .badge { background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: #94a3b8; }
-        .reset-link { color: #64748b; text-align: center; display: block; margin-top: 20px; font-size: 0.8rem; text-decoration: none; cursor: pointer;}
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -53,40 +19,88 @@
         <div id="playerInputs"></div>
     </div>
 
+    <button onclick="addPlayer()" style="background: #1e293b; border: 1px dashed var(--primary); margin-bottom: 15px; font-size: 0.8rem; padding: 10px;">
+        + Add Player
+    </button>
+
     <button onclick="generateNextMatch()">Generate Next Match</button>
 
     <div id="currentMatchArea" class="card" style="display:none; border: 2px solid var(--primary);">
         <h2 id="matchTitle">Current Match</h2>
-        <div class="match-grid">
-            <div class="team-col" id="teamA"></div>
+        
+        <div class="match-grid" style="margin-bottom: 20px;">
+            <div class="team-col">
+                <div id="teamA"></div>
+                <div class="score-box">
+                    <label>Score</label>
+                    <div style="position: relative; display: inline-block;">
+                        <input type="number" id="scoreA" value="0" min="0">
+                        <button class="quick-score-btn" onclick="setQuickScore('A')">11</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="vs-circle">VS</div>
-            <div class="team-col" id="teamB"></div>
-        </div>
 
-        <button id="shuffleBtn" onclick="shufflePairs()" style="background: #d8e659; color: black; font-size: 0.8rem; padding: 8px; margin-bottom: 15px; width: auto; display: block; margin-left: auto; margin-right: auto;">
-            🔀 Shuffle Pairs
-        </button>
-
-        <div style="display:grid; grid-template-columns: 1fr 40px 1fr; gap: 10px;">
-            <button class="win-btn" onclick="recordWin('A')">Win</button>
-            <div></div>
-            <button class="win-btn" onclick="recordWin('B')">Win</button>
+            <div class="team-col">
+                <div id="teamB"></div>
+                <div class="score-box">
+                    <label>Score</label>
+                    <div style="position: relative; display: inline-block;">
+                        <input type="number" id="scoreB" value="0" min="0">
+                        <button class="quick-score-btn" onclick="setQuickScore('B')">11</button>
+                    </div>
+                </div>
+            </div>
         </div>
+        <button class="submit-btn" onclick="finishMatch()">Submit Result</button>
+        <button id="shuffleBtn" onclick="shufflePairs()" class="shuffle-btn">🔀 Shuffle Pairs</button>
     </div>
 
     <div class="card">
-        <h2 id="leaderboardTitle">2v2 Leaderboard</h2>
-        <table id="leaderboard">
-            <thead>
-                <tr><th>Player</th><th>P</th><th>W</th><th>W%</th><th>Wilson</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab('indiv')">Leaderboard</button>
+            <button class="tab-btn" id="pairsTabBtn" onclick="openTab('pairs')">Pairs (2v2)</button>
+            <button class="tab-btn" onclick="openTab('history')">History</button>
+        </div>
+
+        <!-- Tab 1: Individual Leaderboard -->
+        <div id="tab-indiv" class="tab-content active">
+            <h2 id="leaderboardTitle">Leaderboard</h2>
+            <table id="leaderboard">
+                <thead>
+                    <tr><th>Player</th><th>P</th><th>W</th><th>W%</th><th>Wilson</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Tab 2: Pairs Leaderboard -->
+        <div id="tab-pairs" class="tab-content">
+            <h2>2v2 Pairs Leaderboard</h2>
+            <table id="pairsLeaderboard">
+                <thead>
+                    <tr><th>Duo</th><th>P</th><th>W</th><th>W%</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Tab 3: History -->
+        <div id="tab-history" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="margin:0;">History</h2>
+                <select id="historyFilter" onchange="renderHistory()" style="background:#1e293b; color:white; border:1px solid var(--border); border-radius:4px;">
+                    <option value="all">All Players</option>
+                </select>
+            </div>
+            <div id="historyList"></div>
+        </div>
     </div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
         <button onclick="resetSession()" style="background: #475569; font-size: 0.8rem; padding: 10px;">Reset Session (L:0)</button>
-        <button onclick="resetLeaderboard()" style="background: #475569; font-size: 0.8rem; padding: 10px;">Clear Current Mode</button>
+        <button onclick="resetLeaderboard()" style="background: #475569; font-size: 0.8rem; padding: 10px;">Clear Current Leaderboard</button>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
@@ -97,221 +111,9 @@
 
     <a href="javascript:void(0)" class="reset-link" onclick="resetData()">Reset All Statistics (Wipe Everything)</a>
 </div>
+    <!--<script src="script.js"></script> -->
+    <script src="data.js"></script>
+    <script src="ui.js"></script>
 
-<script>
-    const MAX_SLOTS = 15;
-    let players = [];
-    let currentMode = 'v2';
-    let currentMatch = null;
-
-    function load() {
-        const raw = localStorage.getItem('tt_elite_dual_data');
-        if (raw) {
-            players = JSON.parse(raw);
-        } else {
-            players = Array.from({length: MAX_SLOTS}, (_, i) => ({
-                id: i, name: `Player ${i+1}`, isChecked: false, logicGames: 0,
-                v2: { actualGames: 0, wins: 0 },
-                v1: { actualGames: 0, wins: 0 }
-            }));
-        }
-    }
-
-    function setMode(mode) {
-        if (mode === currentMode) return;
-        if (confirm(`Switch to ${mode === 'v1' ? '1 vs 1' : '2 vs 2'}? This resets 'L' priority badges.`)) {
-            currentMode = mode;
-            players.forEach(p => { p.logicGames = 0; });
-            document.getElementById('btnV1').classList.toggle('active', mode === 'v1');
-            document.getElementById('btnV2').classList.toggle('active', mode === 'v2');
-            document.getElementById('leaderboardTitle').innerText = mode === 'v1' ? '1v1 Leaderboard' : '2v2 Leaderboard';
-            document.getElementById('currentMatchArea').style.display = 'none';
-            save(); renderInputs(); updateLeaderboard();
-        }
-    }
-
-    function renderInputs() {
-        const container = document.getElementById('playerInputs');
-        container.innerHTML = '';
-        players.forEach((p, i) => {
-            const div = document.createElement('div');
-            div.className = 'player-row';
-            div.innerHTML = `
-                <input type="checkbox" ${p.isChecked ? 'checked' : ''} onchange="togglePlayer(${i})">
-                <input type="text" value="${p.name}" onchange="updateName(${i}, this.value)">
-                <span class="badge">L:${p.logicGames || 0}</span>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function togglePlayer(idx) {
-        // 1. Reference the specific player in the master array
-        const p = players[idx];
-        p.isChecked = !p.isChecked;
-
-        if (p.isChecked) {
-            // 2. Filter everyone ELSE who is already checked in
-            const others = players.filter((pl, i) => pl.isChecked && i !== idx);
-            
-            if (others.length > 0) {
-                // 3. Find the lowest L from the others
-                const minL = Math.min(...others.map(pl => pl.logicGames || 0));
-                p.logicGames = minL;
-            } else {
-                p.logicGames = 0;
-            }
-        } else {
-            p.logicGames = 0;
-        }
-
-        // 4. CRITICAL: Save and Re-render
-        save(); 
-        renderInputs(); 
-        updateLeaderboard();
-    }
-
-    function updateName(idx, val) {
-        players[idx].name = val.trim() || `Player ${idx + 1}`; 
-        save(); updateLeaderboard();
-    }
-
-    function getWilsonScore(wins, total) {
-        if (total === 0) return 0;
-        const z = 1.96; const phat = wins / total;
-        const score = (phat + (z * z) / (2 * total) - z * Math.sqrt((phat * (1 - phat) + (z * z) / (4 * total)) / total)) / (1 + (z * z) / total);
-        return score * 100;
-    }
-
-    function generateNextMatch() {
-        const available = players.filter(p => p.isChecked);
-        const required = currentMode === 'v1' ? 2 : 4;
-        if (available.length < required) return alert(`Need at least ${required} checked players!`);
-
-        // Sort: Least games first, random tie-breaker
-        let pool = [...available].sort(() => Math.random() - 0.5);
-        pool.sort((a, b) => (a.logicGames || 0) - (b.logicGames || 0));
-
-        const selected = pool.slice(0, required);
-        const getRate = (p) => p[currentMode].actualGames === 0 ? 50 : (p[currentMode].wins / p[currentMode].actualGames) * 100;
-        selected.sort((a, b) => getRate(b) - getRate(a));
-
-        if (currentMode === 'v2') {
-            currentMatch = { teamA: [selected[0], selected[3]], teamB: [selected[1], selected[2]] };
-        } else {
-            currentMatch = { teamA: [selected[0]], teamB: [selected[1]] };
-        }
-        
-        displayMatch();
-        document.getElementById('currentMatchArea').style.display = 'block';
-    }
-
-    function displayMatch() {
-        const shuffleBtn = document.getElementById('shuffleBtn');
-        shuffleBtn.style.display = (currentMode === 'v2') ? 'block' : 'none';
-
-        if (currentMode === 'v2') {
-            document.getElementById('teamA').innerHTML = `<div class="player-name">${currentMatch.teamA[0].name}</div><div class="ampersand">&</div><div class="player-name">${currentMatch.teamA[1].name}</div>`;
-            document.getElementById('teamB').innerHTML = `<div class="player-name">${currentMatch.teamB[0].name}</div><div class="ampersand">&</div><div class="player-name">${currentMatch.teamB[1].name}</div>`;
-        } else {
-            document.getElementById('teamA').innerHTML = `<div class="player-name">${currentMatch.teamA[0].name}</div>`;
-            document.getElementById('teamB').innerHTML = `<div class="player-name">${currentMatch.teamB[0].name}</div>`;
-        }
-    }
-
-    function shufflePairs() {
-        if (!currentMatch || currentMode !== 'v2') return;
-        const all = [...currentMatch.teamA, ...currentMatch.teamB].sort(() => Math.random() - 0.5);
-        currentMatch.teamA = [all[0], all[1]];
-        currentMatch.teamB = [all[2], all[3]];
-        displayMatch();
-    }
-
-    function recordWin(winner) {
-        const involvedIds = [...currentMatch.teamA, ...currentMatch.teamB].map(p => p.id);
-        const winningIds = (winner === 'A' ? currentMatch.teamA : currentMatch.teamB).map(p => p.id);
-        
-        players.forEach(p => {
-            if (involvedIds.includes(p.id)) {
-                p[currentMode].actualGames++; 
-                p.logicGames = (p.logicGames || 0) + 1;
-                if (winningIds.includes(p.id)) p[currentMode].wins++;
-            }
-        });
-        
-        document.getElementById('currentMatchArea').style.display = 'none';
-        currentMatch = null;
-        save(); renderInputs(); updateLeaderboard();
-    }
-
-    function updateLeaderboard() {
-        const tbody = document.querySelector('#leaderboard tbody');
-        if (!tbody) return;
-
-        // Show players who have either played games OR are currently checked in
-        const sorted = [...players].filter(p => p[currentMode].actualGames > 0 || p.isChecked).sort((a, b) => {
-            const scoreA = getWilsonScore(a[currentMode].wins, a[currentMode].actualGames);
-            const scoreB = getWilsonScore(b[currentMode].wins, b[currentMode].actualGames);
-            return scoreB - scoreA || b[currentMode].actualGames - a[currentMode].actualGames;
-        });
-        
-        tbody.innerHTML = sorted.map(p => {
-            const s = p[currentMode];
-            const rate = s.actualGames ? Math.round((s.wins / s.actualGames) * 100) : 0;
-            const wilson = getWilsonScore(s.wins, s.actualGames).toFixed(1);
-            return `<tr><td>${p.name}</td><td>${s.actualGames}</td><td>${s.wins}</td><td>${rate}%</td><td>${wilson}</td></tr>`;
-        }).join('');
-    }
-
-    function save() { localStorage.setItem('tt_elite_dual_data', JSON.stringify(players)); }
-
-    function exportData() {
-        const dataStr = JSON.stringify(players, null, 2);
-        const blob = new Blob([dataStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url; a.download = `tt_mixer_dual_export.json`;
-        a.click();
-    }
-
-    function importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const imported = JSON.parse(e.target.result);
-                if (Array.isArray(imported)) {
-                    players = imported;
-                    save(); // Save to local storage
-                    renderInputs(); // Refresh UI list
-                    updateLeaderboard(); // Refresh UI table
-                    alert("Data imported and saved successfully!");
-                }
-            } catch (err) { alert("Invalid file format."); }
-        };
-        reader.readAsText(file);
-    }
-
-    function resetData() {
-        if(confirm("Wipe EVERYTHING?")) { localStorage.removeItem('tt_elite_dual_data'); location.reload(); }
-    }
-
-    function resetSession() {
-        if (confirm("Reset 'L' rotation?")) {
-            players.forEach(p => { p.logicGames = 0; });
-            save(); renderInputs();
-        }
-    }
-
-    function resetLeaderboard() {
-        if (confirm(`Wipe all ${currentMode} stats?`)) {
-            players.forEach(p => { p[currentMode].actualGames = 0; p[currentMode].wins = 0; p.logicGames = 0; });
-            save(); renderInputs(); updateLeaderboard();
-        }
-    }
-
-    load(); renderInputs(); updateLeaderboard();
-</script>
 </body>
 </html>
