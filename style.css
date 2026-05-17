@@ -58,7 +58,7 @@ td { padding: 10px 8px; border-top: 1px solid var(--border); }
     .col-wilw, .col-wilp { display: none; } /* Hide individual Wilson parts */
 }
 @media (max-width: 700px) {
-    .col-pf, .col-pa { display: none; } /* Hide Point totals, keep Difference */
+    .col-pf, .col-pa, .col-pd { display: none; } /* Hide raw totals, keep aPD */
 }
 @media (max-width: 500px) {
     th:nth-child(4), td:nth-child(4) { display: none; } /* Optional: Hide P or W if ultra-small */
