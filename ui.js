@@ -56,11 +56,11 @@ function updateLeaderboard() {
     const headerRow = document.querySelector('#leaderboard thead tr');
     if (!tbody) return;
 
-    // 1. Update Table Headers for the new columns
+    // 1. Added aPD header
     headerRow.innerHTML = `
         <th>Player</th><th>P</th><th>W</th>
-        <th class="col-pf">PF</th><th class="col-pa">PA</th><th>PD</th>
-        <th>W%</th><th class="col-wilw">WilW</th><th class="col-wilp">WilP</th>
+        <th class="col-pf">PF</th><th class="col-pa">PA</th><th class="col-pd">PD</th>
+        <th>aPD</th><th>W%</th><th class="col-wilw">WilW</th><th class="col-wilp">WilP</th>
         <th>Wilson</th>
     `;
 
@@ -70,7 +70,7 @@ function updateLeaderboard() {
         .map(p => {
             const stats = {
                 name: p.name,
-                p: 0, w: 0, pf: 0, pa: 0, pd: 0,
+                p: 0, w: 0, pf: 0, pa: 0, pd: 0, aPD: 0,
                 wilW: 0, wilP: 0, finalWilson: 0, winRate: 0
             };
 
@@ -92,6 +92,7 @@ function updateLeaderboard() {
             });
 
             stats.pd = stats.pf - stats.pa;
+            stats.aPD = stats.p ? (stats.pd / stats.p) : 0; // 2. Calculate aPD
             stats.winRate = stats.p ? (stats.w / stats.p) : 0;
 
             // Calculate Hybrid Wilson
@@ -99,21 +100,20 @@ function updateLeaderboard() {
             stats.wilW = getWilsonScore(stats.w, stats.p);
             // Wilson Points: Points For / Total Points Played (PF + PA)
             stats.wilP = getWilsonScore(stats.pf, (stats.pf + stats.pa));
-            
             stats.finalWilson = (0.8 * stats.wilW) + (0.2 * stats.wilP);
-
             return stats;
         });
 
-    // 3. Sorting Hierarchy
+    // 3. Updated Sorting Hierarchy (aPD is now the primary point tie-breaker)
     leaderboardData.sort((a, b) => {
         if (b.finalWilson !== a.finalWilson) return b.finalWilson - a.finalWilson;
         if (b.wilW !== a.wilW) return b.wilW - a.wilW;
-        if (b.pd !== a.pd) return b.pd - a.pd;
+        if (b.aPD !== a.aPD) return b.aPD - a.aPD; // Tie-breaker 2
+        if (b.pd !== a.pd) return b.pd - a.pd;     // Tie-breaker 3
         return b.winRate - a.winRate;
     });
 
-    // 4. Render Row
+    // 4. Render Row with aPD
     tbody.innerHTML = leaderboardData.map(s => `
         <tr>
             <td>${s.name}</td>
@@ -121,7 +121,8 @@ function updateLeaderboard() {
             <td>${s.w}</td>
             <td class="col-pf">${s.pf}</td>
             <td class="col-pa">${s.pa}</td>
-            <td>${s.pd > 0 ? '+' + s.pd : s.pd}</td>
+            <td class="col-pd">${s.pd > 0 ? '+' + s.pd : s.pd}</td>
+            <td style="font-weight: 500;">${s.aPD > 0 ? '+' + s.aPD.toFixed(1) : s.aPD.toFixed(1)}</td>
             <td>${Math.round(s.winRate * 100)}%</td>
             <td class="col-wilw">${s.wilW.toFixed(1)}</td>
             <td class="col-wilp">${s.wilP.toFixed(1)}</td>
@@ -143,30 +144,82 @@ function updatePairsLeaderboard() {
     }
     pairsTabBtn.style.display = 'block';
 
+    const headerRow = document.querySelector('#pairsLeaderboard thead tr');
+    const tbody = document.querySelector('#pairsLeaderboard tbody');
+    if (!tbody || !headerRow) return;
+
+    // A. Sync Table Headers with the new responsive layout
+    headerRow.innerHTML = `
+        <th>Pair</th><th>P</th><th>W</th>
+        <th class="col-pf">PF</th><th class="col-pa">PA</th><th class="col-pd">PD</th>
+        <th>aPD</th><th>W%</th><th class="col-wilw">WilW</th><th class="col-wilp">WilP</th>
+        <th>Wilson</th>
+    `;
+
     const pairs = {};
+
+    // B. Calculate granular stats from history array
     history.filter(m => m.mode === 'v2').forEach(m => {
         ['teamA', 'teamB'].forEach(tKey => {
-            const teamNames = m[tKey].map(p => p.name).sort(); // SORTING ensures P2&P3 == P3&P2
+            const teamNames = m[tKey].map(p => p.name).sort(); // Keep string unique
             const pairKey = teamNames.join(" & ");
-            if (!pairs[pairKey]) pairs[pairKey] = { wins: 0, games: 0 };
-            pairs[pairKey].games++;
-            if ((tKey === 'teamA' && m.winner === 'A') || (tKey === 'teamB' && m.winner === 'B')) {
-                pairs[pairKey].wins++;
+
+            if (!pairs[pairKey]) {
+                pairs[pairKey] = { p: 0, w: 0, pf: 0, pa: 0, pd: 0, aPD: 0, wilW: 0, wilP: 0, finalWilson: 0, winRate: 0 };
             }
+
+            const stats = pairs[pairKey];
+            stats.p++;
+
+            const myScore = tKey === 'teamA' ? m.scoreA : m.scoreB;
+            const oppScore = tKey === 'teamA' ? m.scoreB : m.scoreA;
+            const won = (tKey === 'teamA' && m.winner === 'A') || (tKey === 'teamB' && m.winner === 'B');
+
+            if (won) stats.w++;
+            stats.pf += myScore;
+            stats.pa += oppScore;
         });
     });
 
-    const sortedPairs = Object.entries(pairs).sort((a, b) => (b[1].wins / b[1].games) - (a[1].wins / a[1].games));
+    // C. Format and compute Wilson metrics for each unique pair
+    const pairsListData = Object.entries(pairs).map(([names, stats]) => {
+        stats.pd = stats.pf - stats.pa;
+        stats.aPD = stats.p ? (stats.pd / stats.p) : 0; // 2. Calculate aPD
+        stats.winRate = stats.p ? (stats.w / stats.p) : 0;
 
-    document.querySelector('#pairsLeaderboard tbody').innerHTML = sortedPairs.map(([names, stats]) => {
-        const winRate = ((stats.wins / stats.games) * 100).toFixed(0);
-        return `<tr>
-            <td>${names}</td>
-            <td>${stats.games}</td> <!-- Played -->
-            <td>${stats.wins}</td>  <!-- Won -->
-            <td>${winRate}%</td>    <!-- Win % -->
-        </tr>`;
-    }).join('');
+        // Hybrid Wilson Logic
+        stats.wilW = getWilsonScore(stats.w, stats.p);
+        stats.wilP = getWilsonScore(stats.pf, (stats.pf + stats.pa));
+        stats.finalWilson = (0.8 * stats.wilW) + (0.2 * stats.wilP);
+
+        return { names, ...stats };
+    });
+
+    // D. Multi-Tier Sorting Hierarchy matching our Main Leaderboard
+    pairsListData.sort((a, b) => {
+        if (b.finalWilson !== a.finalWilson) return b.finalWilson - a.finalWilson;
+        if (b.wilW !== a.wilW) return b.wilW - a.wilW;
+        if (b.aPD !== a.aPD) return b.aPD - a.aPD; // Tie-breaker 2
+        if (b.pd !== a.pd) return b.pd - a.pd;     // Tie-breaker 3
+        return b.winRate - a.winRate;
+    });
+
+    // E. Render fully responsive table rows
+    tbody.innerHTML = pairsListData.map(s => `
+        <tr>
+            <td>${s.names}</td>
+            <td>${s.p}</td>
+            <td>${s.w}</td>
+            <td class="col-pf">${s.pf}</td>
+            <td class="col-pa">${s.pa}</td>
+            <td class="col-pd">${s.pd > 0 ? '+' + s.pd : s.pd}</td>
+            <td style="font-weight: 500;">${s.aPD > 0 ? '+' + s.aPD.toFixed(1) : s.aPD.toFixed(1)}</td>
+            <td>${Math.round(s.winRate * 100)}%</td>
+            <td class="col-wilw">${s.wilW.toFixed(1)}</td>
+            <td class="col-wilp">${s.wilP.toFixed(1)}</td>
+            <td style="font-weight:bold; color:var(--primary)">${s.finalWilson.toFixed(1)}</td>
+        </tr>
+    `).join('');
 }
 
 function openTab(tabId) {
