@@ -1,3 +1,12 @@
+## v5.1 Optimization & Feature Expansion
+
+* **Synchronized Layout Engine**: Overhauled `updatePairsLeaderboard` to perfectly match the main leaderboard, dynamically generating identical 11-column structures with built-in responsive hiding for mobile devices.
+* **Average Points Difference (aPD)**: Introduced a per-game efficiency metric ($Total\ PD / Games$) to both leaderboards, exposing true court dominance regardless of match frequency.
+* **Advanced Multi-Tier Sorting**: Upgraded the competitive sorting hierarchy across both views to cleanly isolate tie-breakers in a strict sequence:
+      Hybrid Wilson > Wilson Wins > aPD > Total PD > Win Rate
+
+
+
 ## v5 Key Updates
 
 * **Modular Architecture**: Refactored the codebase from a single script into four distinct files (`index.html`, `style.css`, `data.js`, `ui.js`) for better maintainability.
